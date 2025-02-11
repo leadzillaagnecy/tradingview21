@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Trading Dashboard AI Pilot</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Chart.js CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    /* CSS Variables for easy theming */
+    :root {
+      --primary-bg: #121212;
+      --secondary-bg: #1e1e2f;
+      --card-bg: #22242c;
+      --accent-green: #4caf50;
+      --accent-red: #f44336;
+      --text-color: #e0e0e0;
+      --muted-text: #aaaaaa;
+      --border-color: #333;
+    }
+
+    /* Global Styles */
+    * {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: var(--primary-bg);
+      color: var(--text-color);
+      line-height: 1.6;
+    }
+
+    /* Navbar */
+    .navbar {
+      background-color: var(--secondary-bg);
+      padding: 15px 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+    }
+    .navbar h1 {
+      margin: 0;
+      font-size: 24px;
+    }
+    .balance {
+      font-size: 18px;
+      font-weight: bold;
+      color: var(--accent-green);
+    }
+
+    /* Main Container */
+    .container {
+      max-width: 1200px;
+      margin: 30px auto;
+      padding: 0 20px;
+    }
+
+    /* Chart Container */
+    .chart-container {
+      background-color: var(--card-bg);
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+      margin-bottom: 30px;
+    }
+    .chart-container h2 {
+      margin: 0 0 10px;
+    }
+    .chart-container select {
+      padding: 8px 12px;
+      font-size: 16px;
+      border-radius: 5px;
+      border: none;
+      margin-bottom: 10px;
+      background-color: var(--secondary-bg);
+      color: var(--text-color);
+    }
+
+    /* Grid Layout for Trading Assets */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 20px;
+      margin-bottom: 30px;
+    }
+
+    /* Card Style for Each Asset */
+    .card {
+      background-color: var(--card-bg);
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+      transition: transform 0.3s ease;
+    }
+    .card:hover {
+      transform: translateY(-5px);
+    }
+    .card h2 {
+      margin-top: 0;
+      font-size: 20px;
+      border-bottom: 1px solid var(--border-color);
+      padding-bottom: 10px;
+    }
+    .price {
+      font-size: 28px;
+      font-weight: bold;
+    }
+    .percentage {
+      font-size: 18px;
+      margin-top: 5px;
+      color: var(--muted-text);
+    }
+
+    /* Signal Box */
+    .signal-box {
+      margin-top: 10px;
+      padding: 10px;
+      border-radius: 5px;
+      background-color: var(--secondary-bg);
+      font-size: 16px;
+      font-weight: bold;
+    }
+
+    /* Trade Buttons */
+    .trade-buttons {
+      display: flex;
+      gap: 10px;
+      margin-top: 15px;
+    }
+    .trade-buttons button {
+      flex: 1;
+      padding: 10px;
+      font-size: 16px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    .trade-buttons button.buy {
+      background-color: var(--accent-green);
+      color: #000;
+    }
+    .trade-buttons button.sell {
+      background-color: var(--accent-red);
+      color: #fff;
+    }
+    .trade-buttons button:hover {
+      opacity: 0.9;
+    }
+
+    /* Order History Section */
+    .order-history {
+      background-color: var(--card-bg);
+      border-radius: 10px;
+      padding: 20px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+    }
+    .order-history h2 {
+      margin-top: 0;
+    }
+    .order-history ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .order-history li {
+      padding: 8px;
+      border-bottom: 1px solid var(--border-color);
+      font-size: 14px;
+    }
+    .order-history li:last-child {
+      border-bottom: none;
+    }
+  </style>
+</head>
+<body>
+  <!-- Navbar -->
+  <div class="navbar">
+    <h1>Trading Dashboard AI Pilot</h1>
+    <div class="balance">Balance: $10,000</div>
+  </div>
+
+  <!-- Main Container -->
+  <div class="container">
+    <!-- Chart Section (Now on Top) -->
+    <div class="chart-container">
+      <h2>Live Price Chart</h2>
+      <select id="chartSelect" onchange="changeChartAsset()">
+        <option value="forex">Forex (INR/USD)</option>
+        <option value="crypto">Crypto (Bitcoin)</option>
+        <option value="gold">Gold</option>
+      </select>
+      <canvas id="marketChart"></canvas>
+    </div>
+
+    <!-- Trading Assets Grid (Below the Chart) -->
+    <div class="grid">
+      <!-- Forex Card -->
+      <div class="card" id="card-forex">
+        <h2>Forex (INR/USD)</h2>
+        <div class="price" id="forex-price">₹83.50</div>
+        <div class="percentage" id="forex-change">+0.45%</div>
+        <div class="signal-box" id="forex-signal">AI is giving signal to BUY (82%)</div>
+        <div class="trade-buttons">
+          <button class="buy" onclick="simulateTrade('Forex', 'Buy')">BUY</button>
+          <button class="sell" onclick="simulateTrade('Forex', 'Sell')">SELL</button>
+        </div>
+      </div>
+      <!-- Crypto Card -->
+      <div class="card" id="card-crypto">
+        <h2>Crypto (Bitcoin)</h2>
+        <div class="price" id="crypto-price">$42,000</div>
+        <div class="percentage" id="crypto-change">-1.23%</div>
+        <div class="signal-box" id="crypto-signal">AI is giving signal to SELL (65%)</div>
+        <div class="trade-buttons">
+          <button class="buy" onclick="simulateTrade('Crypto', 'Buy')">BUY</button>
+          <button class="sell" onclick="simulateTrade('Crypto', 'Sell')">SELL</button>
+        </div>
+      </div>
+      <!-- Gold Card -->
+      <div class="card" id="card-gold">
+        <h2>Commodities (Gold)</h2>
+        <div class="price" id="gold-price">$1,950</div>
+        <div class="percentage" id="gold-change">+0.78%</div>
+        <div class="signal-box" id="gold-signal">AI is giving signal to BUY (74%)</div>
+        <div class="trade-buttons">
+          <button class="buy" onclick="simulateTrade('Gold', 'Buy')">BUY</button>
+          <button class="sell" onclick="simulateTrade('Gold', 'Sell')">SELL</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Order History Section -->
+    <div class="order-history">
+      <h2>Trade History</h2>
+      <ul id="trade-list"></ul>
+    </div>
+  </div>
+
+  <script>
+    // Initialize current prices
+    let currentForexPrice = 83.50;
+    let currentCryptoPrice = 42000;
+    let currentGoldPrice = 1950;
+    let selectedAsset = 'forex';
+
+    // Update prices and AI signals every second using dummy data
+    function updatePrices() {
+      currentForexPrice = Number((82 + Math.random()).toFixed(2));
+      currentCryptoPrice = Number((40000 + Math.random() * 2000).toFixed(2));
+      currentGoldPrice = Number((1900 + Math.random() * 100).toFixed(2));
+
+      document.getElementById("forex-price").innerText = `₹${currentForexPrice}`;
+      document.getElementById("crypto-price").innerText = `$${currentCryptoPrice}`;
+      document.getElementById("gold-price").innerText = `$${currentGoldPrice}`;
+
+      document.getElementById("forex-change").innerText = `${(Math.random() * 2 - 1).toFixed(2)}%`;
+      document.getElementById("crypto-change").innerText = `${(Math.random() * 2 - 1).toFixed(2)}%`;
+      document.getElementById("gold-change").innerText = `${(Math.random() * 2 - 1).toFixed(2)}%`;
+
+      let forexSignal = Math.random() > 0.5 ? "BUY" : "SELL";
+      let cryptoSignal = Math.random() > 0.5 ? "BUY" : "SELL";
+      let goldSignal = Math.random() > 0.5 ? "BUY" : "SELL";
+
+      let forexSignalPerc = (Math.random() * 100).toFixed(2);
+      let cryptoSignalPerc = (Math.random() * 100).toFixed(2);
+      let goldSignalPerc = (Math.random() * 100).toFixed(2);
+
+      document.getElementById("forex-signal").innerText = `AI is giving signal to ${forexSignal} (${forexSignalPerc}%)`;
+      document.getElementById("crypto-signal").innerText = `AI is giving signal to ${cryptoSignal} (${cryptoSignalPerc}%)`;
+      document.getElementById("gold-signal").innerText = `AI is giving signal to ${goldSignal} (${goldSignalPerc}%)`;
+
+      setTimeout(updatePrices, 1000);
+    }
+
+    // Set up Chart.js for live updates
+    const ctx = document.getElementById('marketChart').getContext('2d');
+    const chart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: [],
+        datasets: [{
+          label: 'Price',
+          data: [],
+          backgroundColor: 'rgba(76, 175, 80, 0.2)',
+          borderColor: 'rgba(76, 175, 80, 1)',
+          borderWidth: 2,
+          tension: 0.3,
+          fill: true,
+        }]
+      },
+      options: {
+        scales: {
+          x: {
+            title: {
+              display: true,
+              text: 'Time'
+            }
+          },
+          y: {
+            title: {
+              display: true,
+              text: 'Price'
+            }
+          }
+        }
+      }
+    });
+
+    // Update chart data every second based on selected asset
+    function updateChartData() {
+      const now = new Date();
+      const timeLabel = now.toLocaleTimeString();
+      let price;
+      if (selectedAsset === 'forex') {
+        price = currentForexPrice;
+      } else if (selectedAsset === 'crypto') {
+        price = currentCryptoPrice;
+      } else if (selectedAsset === 'gold') {
+        price = currentGoldPrice;
+      }
+      chart.data.labels.push(timeLabel);
+      chart.data.datasets[0].data.push(price);
+      // Limit to last 20 data points for clarity
+      if (chart.data.labels.length > 20) {
+        chart.data.labels.shift();
+        chart.data.datasets[0].data.shift();
+      }
+      chart.update();
+    }
+
+    // Change chart asset when dropdown value changes
+    function changeChartAsset() {
+      selectedAsset = document.getElementById("chartSelect").value;
+      chart.data.labels = [];
+      chart.data.datasets[0].data = [];
+      chart.update();
+    }
+
+    // Simulated trade execution: append trade info to trade history
+    function simulateTrade(asset, type) {
+      const tradeList = document.getElementById("trade-list");
+      const listItem = document.createElement("li");
+      listItem.innerText = `${asset} - ${type} at ${new Date().toLocaleTimeString()}`;
+      tradeList.appendChild(listItem);
+    }
+
+    // Start the simulations
+    updatePrices();
+    setInterval(updateChartData, 1000);
+  </script>
+</body>
+</html>
+
